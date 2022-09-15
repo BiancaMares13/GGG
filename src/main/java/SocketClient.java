@@ -1,5 +1,5 @@
 import com.google.gson.Gson;
-import model.Root;
+import com.google.gson.JsonObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,13 +49,13 @@ class MyClient implements Runnable {
         registerMsg = "{ \"get_team_id_for\" :\"" + teamName + "\"}";
 
         try {
-            botId = new String(this.sendMessage(registerMsg), StandardCharsets.UTF_8);
+            this.sendMessage(registerMsg);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public byte[] sendMessage(String message) throws IOException {
+    public void sendMessage(String message) throws IOException {
         System.out.println("sendingMessage: " + message);
         int msgLen = message.length();
         String hex = String.format("%04X", msgLen);
@@ -63,7 +63,6 @@ class MyClient implements Runnable {
 
         byte[] byteArray = fullMsg.getBytes(StandardCharsets.UTF_8);
         writer.write(byteArray);
-        return byteArray;
     }
 
     private void read() throws IOException {
@@ -85,8 +84,11 @@ class MyClient implements Runnable {
 
             Gson gson = new Gson();
             String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
-            Object root = gson.fromJson(replacedMessage, Object.class);
+            JsonObject root = gson.fromJson(replacedMessage, JsonObject.class);
             System.out.println(root);
+            if (root.get("bot_id") != null) {
+                botId = root.get("bot_id").getAsString();
+            }
 
             message = new StringBuilder();
         }
