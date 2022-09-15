@@ -2,10 +2,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import model.BoardObject;
-import model.BoardObjectType;
-import model.Container;
-import model.Move;
+import model.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +33,6 @@ class MyClient implements Runnable {
     private final OutputStream writer;
     private Gson gson = new Gson();
     private String botId;
-
 
     private Character[][] board;
     private Integer containerMaxCapacity;
@@ -102,7 +98,7 @@ class MyClient implements Runnable {
             System.out.println();
             String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
             JsonObject root = gson.fromJson(replacedMessage, JsonObject.class);
-            System.out.println(root);
+
             if (root.get("bot_id") != null) {
                 botId = root.get("bot_id").getAsString();
             } else if (root.get("gameBoard") != null) {
@@ -139,37 +135,46 @@ class MyClient implements Runnable {
 
                 this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
-
+            } else {
+                Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
+                }.getType());
                 int[] start1 = {2, 2};
                 int[] end1 = {19, 19};
                 Bfs.shortestPath(this.board, start1, end1);
 
-                System.out.println(board);
-            } else {
-                sendMessage(gson.toJson(decideMove(root)));
+                int positionX = root.get("row").getAsInt();
+                int positionY = root.get("col").getAsInt();
+
+                /// if we are on the object pick it up
+                System.out.println("PositionX     " + positionX);
+                System.out.println("Positiony    " + positionY);
+                Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, currentObjets);
+                if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
+                    pickUpGarbage(closestGarbage);
+                } else {
+                    decideMove(closestGarbage, positionX, positionY);
+                }
             }
 
             message = new StringBuilder();
         }
     }
 
-    private Move decideMove(JsonObject root) {
-        Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
-        }.getType());
-        Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
+    private void decideMove(Pair<BoardObjectType, BoardObject> closestGarbage, int positionX, int positionY) throws IOException {
+
         Move move = new Move();
-        if (closestGarbage.second.col < root.get("col").getAsInt()) {
+        if (closestGarbage.second.col < positionY) {
             move.move = "left";
-        } else if (closestGarbage.second.col > root.get("col").getAsInt()) {
+        } else if (closestGarbage.second.col > positionY) {
             move.move = "right";
-        } else if (closestGarbage.second.row < root.get("row").getAsInt()) {
+        } else if (closestGarbage.second.row < positionX) {
             move.move = "up";
         } else {
             move.move = "down";
         }
         move.bot_id = botId;
         move.speed = 1;
-        return move;
+        sendMessage(gson.toJson(move));
     }
 
     public Pair<BoardObjectType, BoardObject> getNextCellToClosestGarbage(int col, int row, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
@@ -188,6 +193,7 @@ class MyClient implements Runnable {
                 } else if (path.size() == 1) {
                     closestGarbageType = boardObjectType;
                     nextStep = new BoardObject(path.get(0).x, path.get(0).y);
+                    MIN = 1;
                 }
             }
         } else {
@@ -203,6 +209,7 @@ class MyClient implements Runnable {
                         } else if (path.size() == 1) {
                             closestGarbageType = boardObjectType1;
                             nextStep = new BoardObject(path.get(0).x, path.get(0).y);
+                            MIN = 1;
                         }
                     }
                 }
@@ -210,6 +217,28 @@ class MyClient implements Runnable {
         }
         return new Pair<>(closestGarbageType, nextStep);
         //return new Pair<>(closestGarbageType, closestGarbage);
+    }
+
+
+    private void pickUpGarbage(Pair<BoardObjectType, BoardObject> object) throws IOException {
+        Act pickUp = new Act();
+        pickUp.action = "pick";
+        pickUp.bot_id = this.botId;
+
+        //pick up garbage
+        sendMessage(gson.toJson(pickUp));
+
+        for (Container container : containers) {
+            if (container.getGarbageType() == null) {
+                container.setGarbageType(object.first);
+                container.setRemainingSpace(container.getRemainingSpace() - object.second.volume);
+                break;
+            } else {
+                if (container.getGarbageType().equals(object.first)) {
+                    container.setRemainingSpace(container.getRemainingSpace() - object.second.volume);
+                }
+            }
+        }
     }
 
 

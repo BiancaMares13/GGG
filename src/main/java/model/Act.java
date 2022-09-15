@@ -1,6 +1,6 @@
 package model;
 
 public class Act {
-    public String act;
+    public String action;
     public String bot_id;
 }

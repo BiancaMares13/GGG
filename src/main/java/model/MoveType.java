@@ -10,6 +10,7 @@ public enum MoveType {
     down,
     left,
     right;
+
     private static final List<MoveType> VALUES =
             Collections.unmodifiableList(Arrays.asList(values()));
     private static final int SIZE = VALUES.size();
