@@ -142,7 +142,7 @@ class MyClient implements Runnable {
             } else {
                 Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
-                List<Container> containers = gson.fromJson(root.get("containers"), List.class);
+                List<Container> containers = gson.fromJson(root.get("containers"), new TypeToken<List<Container>>() {}.getType());
 
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
