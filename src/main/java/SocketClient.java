@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class SocketClient {
 
@@ -41,6 +42,8 @@ class MyClient implements Runnable {
     private List<Container> containers = List.of(new Container(), new Container(), new Container());
 
     private Map<BoardObjectType, List<BoardObject>> objects = new HashMap<>();
+
+    private Map<BoardObjectType, List<BoardObject>> recyclingPoints = new HashMap<>();
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -108,13 +111,27 @@ class MyClient implements Runnable {
                 containers.stream().forEach(container -> container.setRemainingSpace(this.containerMaxCapacity));
 
                 List<List<Character>> board = new ArrayList<>();
+                AtomicInteger i = new AtomicInteger();
+
                 boardFromServer.forEach(jsonElement -> {
                     JsonArray boardElement = jsonElement.getAsJsonArray();
                     List<Character> characters = new ArrayList<>();
-                    boardElement.forEach(be ->
-                            characters.add(be.getAsJsonPrimitive().getAsCharacter()));
+                    AtomicInteger j = new AtomicInteger();
+                    boardElement.forEach(be -> {
+                        char asCharacter = be.getAsJsonPrimitive().getAsCharacter();
+                        if (asCharacter == 'P' || asCharacter == 'W' || asCharacter == 'M' || asCharacter == 'G' || asCharacter == 'E' ) {
+                            BoardObjectType boardObjectType = BoardObjectType.valueOf(Character.toString(asCharacter));
+                            recyclingPoints.computeIfAbsent(boardObjectType, k -> new ArrayList<>());
+                            List<BoardObject> boarGameObj = recyclingPoints.get(boardObjectType);
+                            boarGameObj.add(new BoardObject(i, j));
+                            recyclingPoints.put(boardObjectType, boarGameObj);
+                        }
+                        j.getAndIncrement();
+                        characters.add(asCharacter);
+                    });
 
                     board.add(characters);
+                    i.getAndIncrement();
                 });
                 this.board = board.stream()
                         .map(l -> l.toArray(new Character[0]))
