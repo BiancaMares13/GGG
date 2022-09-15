@@ -6,7 +6,6 @@ import model.BoardObject;
 import model.Container;
 import model.Move;
 import model.MoveType;
-import model.Root;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class SocketClient {
 
@@ -45,7 +43,7 @@ class MyClient implements Runnable {
     private Integer containerMaxCapacity;
     private List<Container> containers = List.of(new Container(), new Container(), new Container());
 
-    private Map<String, List<BoardObject>> objects  = new HashMap<>();
+    private Map<String, List<BoardObject>> objects = new HashMap<>();
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -107,7 +105,7 @@ class MyClient implements Runnable {
             System.out.println(root);
             if (root.get("bot_id") != null) {
                 botId = root.get("bot_id").getAsString();
-            } else if (root.get("gameBoard") != null){
+            } else if (root.get("gameBoard") != null) {
                 JsonArray boardFromServer = root.get("gameBoard").getAsJsonArray();
                 this.containerMaxCapacity = root.get("maxVol").getAsInt();
                 containers.stream().forEach(container -> container.setRemainingSpace(this.containerMaxCapacity));
@@ -125,7 +123,8 @@ class MyClient implements Runnable {
                         .map(l -> l.toArray(new Character[0]))
                         .toArray(Character[][]::new);
 
-                this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<String, List<BoardObject>>>() {}.getType());
+                this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<String, List<BoardObject>>>() {
+                }.getType());
 
                 System.out.println(board);
             } else {
