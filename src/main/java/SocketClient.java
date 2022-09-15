@@ -1,6 +1,7 @@
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import model.Container;
 import model.Move;
 import model.MoveType;
 
@@ -12,6 +13,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class SocketClient {
 
@@ -31,10 +33,12 @@ class MyClient implements Runnable {
     private boolean connected = true;
     private final BufferedReader buffReader;
     private final OutputStream writer;
-    public String botId;
+    private String botId;
+
 
     private Character[][] board;
     private Integer containerMaxCapacity;
+    private List<Container> containers = List.of(new Container(), new Container(), new Container());
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -99,6 +103,8 @@ class MyClient implements Runnable {
             } else if (root.get("gameBoard") != null){
                 JsonArray boardFromServer = root.get("gameBoard").getAsJsonArray();
                 this.containerMaxCapacity = root.get("maxVol").getAsInt();
+                containers.stream().forEach(container -> container.setRemainingSpace(this.containerMaxCapacity));
+
                 List<List<Character>> board = new ArrayList<>();
                 boardFromServer.forEach(jsonElement -> {
                     JsonArray boardElement = jsonElement.getAsJsonArray();
