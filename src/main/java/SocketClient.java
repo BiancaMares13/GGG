@@ -152,32 +152,27 @@ class MyClient implements Runnable {
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
 
-                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, currentObjets);
-
+                boolean messageSentPerRound = false;
                 if (containers != null) {
-                    for (Container container : containers) {
-                        if (container.getVolume() > 10) {
-                            Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, Collections.singletonList(container.getType()), recyclingPoints);
-                            if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
-                                dropGarbage();
-                            }
-                            if (closestRecyclingPoint.step < closestGarbage.step) {
-                                decideMove(closestRecyclingPoint, positionX, positionY);
-                            }
+                    if (containers.size() == 3) {
+                        Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, containers.stream().map(Container::getType).collect(Collectors.toList()), recyclingPoints);
+                        if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
+                            messageSentPerRound = true;
+                            dropGarbage();
+                        } else {
+                            messageSentPerRound = true;
+                            decideMove(closestRecyclingPoint, positionX, positionY);
                         }
                     }
-                    if (containers.size() == 3) {
-                        closestGarbage = getNextCellToClosestGarbage(positionX, positionY, containers.stream().map(Container::getType).collect(Collectors.toList()), currentObjets);
+                }
+                if (!messageSentPerRound) {
+                    /// if we are on the object pick it up
+                    Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, currentObjets);
+                    if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
+                        pickUpGarbage();
+                    } else {
                         decideMove(closestGarbage, positionX, positionY);
                     }
-                }
-                /// if we are on the object pick it up
-                if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
-                    pickUpGarbage();
-                } else {
-
-                    closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, currentObjets);
-                    decideMove(closestGarbage, positionX, positionY);
                 }
             }
 
