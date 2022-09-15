@@ -148,7 +148,7 @@ class MyClient implements Runnable {
                 /// if we are on the object pick it up
                 System.out.println("PositionX     " + positionX);
                 System.out.println("Positiony    " + positionY);
-                Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, currentObjets);
+                Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
                     pickUpGarbage(closestGarbage);
                 } else {
@@ -216,7 +216,6 @@ class MyClient implements Runnable {
             }
         }
         return new Pair<>(closestGarbageType, nextStep);
-        //return new Pair<>(closestGarbageType, closestGarbage);
     }
 
 
