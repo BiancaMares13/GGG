@@ -140,6 +140,10 @@ class MyClient implements Runnable {
                 this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
 
+                int[] start1 = {2, 2};
+                int[] end1 = {19, 19};
+                Bfs.shortestPath(this.board, start1, end1);
+
                 System.out.println(board);
             } else {
                 sendMessage(gson.toJson(decideMove()));
