@@ -1,5 +1,7 @@
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import model.Move;
+import model.MoveType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -88,10 +90,21 @@ class MyClient implements Runnable {
             System.out.println(root);
             if (root.get("bot_id") != null) {
                 botId = root.get("bot_id").getAsString();
+            } else{
+                sendMessage(gson.toJson(decideMove()));
             }
+
 
             message = new StringBuilder();
         }
+    }
+
+    private Move decideMove() {
+        Move move = new Move();
+        move.bot_id = botId;
+        move.move = MoveType.randomMove().name();
+        move.speed = 1;
+        return move;
     }
 
     public void close() throws IOException {
