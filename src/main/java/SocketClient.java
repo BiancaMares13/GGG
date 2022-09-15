@@ -2,7 +2,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import model.*;
+import model.BoardObject;
+import model.BoardObjectType;
+import model.Container;
+import model.Move;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -159,7 +162,7 @@ class MyClient implements Runnable {
             move.move = "left";
         } else if (closestGarbage.second.col > root.get("col").getAsInt()) {
             move.move = "right";
-        } else if ( closestGarbage.second.row < root.get("row").getAsInt()) {
+        } else if (closestGarbage.second.row < root.get("row").getAsInt()) {
             move.move = "up";
         } else {
             move.move = "down";
@@ -171,17 +174,20 @@ class MyClient implements Runnable {
 
     public Pair<BoardObjectType, BoardObject> getNextCellToClosestGarbage(int col, int row, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
         int MIN = 100;
-        int [] start = {row, col};
+        int[] start = {row, col};
         BoardObject nextStep = null;
         BoardObjectType closestGarbageType = null;
         if (boardObjectType != null) {
             for (BoardObject boardObject : currentObjects.get(boardObjectType)) {
-                int [] end = {boardObject.row, boardObject.col};
+                int[] end = {boardObject.row, boardObject.col};
                 List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
-                if (path.size() < MIN) {
+                if (path.size() < MIN && path.size() > 1) {
                     closestGarbageType = boardObjectType;
                     nextStep = new BoardObject(path.get(1).x, path.get(1).y);
                     MIN = path.size();
+                } else if (path.size() == 1) {
+                    closestGarbageType = boardObjectType;
+                    nextStep = new BoardObject(path.get(0).x, path.get(0).y);
                 }
             }
         } else {
@@ -190,10 +196,13 @@ class MyClient implements Runnable {
                     for (BoardObject boardObject : currentObjects.get(boardObjectType1)) {
                         int[] end = {boardObject.row, boardObject.col};
                         List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
-                        if (path.size() < MIN) {
+                        if (path.size() < MIN && path.size() > 1) {
                             closestGarbageType = boardObjectType1;
                             nextStep = new BoardObject(path.get(1).x, path.get(1).y);
                             MIN = path.size();
+                        } else if (path.size() == 1) {
+                            closestGarbageType = boardObjectType1;
+                            nextStep = new BoardObject(path.get(0).x, path.get(0).y);
                         }
                     }
                 }
