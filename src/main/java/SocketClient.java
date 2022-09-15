@@ -1,3 +1,5 @@
+import com.google.gson.Gson;
+
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
@@ -8,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 public final class SocketClient {
     public static void main(String[] args) {
-        String address = "10.66.175.129";
+        String address = "localhost";
         int port = 31415;
         String teamName = "Runtime Terror";
         MyClient client = new MyClient(address, port);
@@ -77,6 +79,8 @@ class MyClient implements Runnable {
             System.out.println("Message received: " + message);
 
             //TODO: do smth with message
+
+            Gson gson = new Gson();
 
             message = new StringBuilder();
         }
