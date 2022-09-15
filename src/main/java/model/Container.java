@@ -1,29 +1,25 @@
 package model;
 
 public class Container {
-    private BoardObjectType boardObjectType;
-    private Integer remainingSpace;
+    private BoardObjectType type;
+    private Integer volume;
 
     public Container() {
     }
 
-    public Container(Integer remainingSpace) {
-        this.remainingSpace = remainingSpace;
+    public BoardObjectType getType() {
+        return type;
     }
 
-    public BoardObjectType getGarbageType() {
-        return boardObjectType;
+    public void setType(BoardObjectType type) {
+        this.type = type;
     }
 
-    public void setGarbageType(BoardObjectType boardObjectType) {
-        this.boardObjectType = boardObjectType;
+    public Integer getVolume() {
+        return volume;
     }
 
-    public Integer getRemainingSpace() {
-        return remainingSpace;
-    }
-
-    public void setRemainingSpace(Integer remainingSpace) {
-        this.remainingSpace = remainingSpace;
+    public void setVolume(Integer volume) {
+        this.volume = volume;
     }
 }

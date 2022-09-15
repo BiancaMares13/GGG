@@ -93,9 +93,6 @@ class MyClient implements Runnable {
                 message.append(c);
             } while (c != (char) 0);
             System.out.println("Message received: " + message);
-
-            //TODO: do smth with message
-            System.out.println();
             String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
             JsonObject root = gson.fromJson(replacedMessage, JsonObject.class);
 
@@ -104,7 +101,6 @@ class MyClient implements Runnable {
             } else if (root.get("gameBoard") != null) {
                 JsonArray boardFromServer = root.get("gameBoard").getAsJsonArray();
                 this.containerMaxCapacity = root.get("maxVol").getAsInt();
-                containers.stream().forEach(container -> container.setRemainingSpace(this.containerMaxCapacity));
 
                 List<List<Character>> board = new ArrayList<>();
                 AtomicInteger i = new AtomicInteger();
@@ -146,9 +142,7 @@ class MyClient implements Runnable {
             } else {
                 Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
-                int[] start1 = {2, 2};
-                int[] end1 = {19, 19};
-                Bfs.shortestPath(this.board, start1, end1);
+                List<Container> containers = gson.fromJson(root.get("containers"), List.class);
 
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
@@ -161,7 +155,6 @@ class MyClient implements Runnable {
                     decideMove(closestGarbage, positionX, positionY);
                 }
             }
-
             message = new StringBuilder();
         }
     }
