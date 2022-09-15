@@ -136,7 +136,7 @@ class MyClient implements Runnable {
                 }.getType());
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
-                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, objects);
+                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, objects);
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
                     pickUpGarbage();
                 } else {
@@ -150,7 +150,7 @@ class MyClient implements Runnable {
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
 
-                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
+                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, currentObjets);
 
                 /// if we are on the object pick it up
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
@@ -207,7 +207,7 @@ class MyClient implements Runnable {
         sendMessage(gson.toJson(move));
     }
 
-    public Pair<BoardObjectType, BoardObject, Integer> getNextCellToClosestGarbage(int col, int row, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
+    public Pair<BoardObjectType, BoardObject, Integer> getNextCellToClosestGarbage(int row, int col, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
         int MIN = 100;
         int[] start = {row, col};
         BoardObject nextStep = null;
