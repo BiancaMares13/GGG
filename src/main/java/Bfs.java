@@ -34,7 +34,7 @@ public class Bfs {
         Cell[][] cells = new Cell[m][n];
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
-                if (matrix[i][j] != 0) {
+                if (matrix[i][j] != 'o') {
                     cells[i][j] = new Cell(i, j, Integer.MAX_VALUE, null);
                 }
             }
