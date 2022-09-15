@@ -34,6 +34,7 @@ class MyClient implements Runnable {
     public String botId;
 
     private Character[][] board;
+    private Integer containerMaxCapacity;
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -95,11 +96,9 @@ class MyClient implements Runnable {
             System.out.println(root);
             if (root.get("bot_id") != null) {
                 botId = root.get("bot_id").getAsString();
-            } else{
-                sendMessage(gson.toJson(decideMove()));
-            }
-            if(root.get("gameBoard") != null) {
+            } else if (root.get("gameBoard") != null){
                 JsonArray boardFromServer = root.get("gameBoard").getAsJsonArray();
+                this.containerMaxCapacity = root.get("maxVol").getAsInt();
                 List<List<Character>> board = new ArrayList<>();
                 boardFromServer.forEach(jsonElement -> {
                     JsonArray boardElement = jsonElement.getAsJsonArray();
@@ -113,8 +112,9 @@ class MyClient implements Runnable {
                         .map(l -> l.toArray(new Character[0]))
                         .toArray(Character[][]::new);
                 System.out.println(board);
+            } else {
+                sendMessage(gson.toJson(decideMove()));
             }
-
 
             message = new StringBuilder();
         }
