@@ -133,9 +133,9 @@ class MyClient implements Runnable {
                 }.getType());
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
-                Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, objects);
+                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, objects);
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
-                    pickUpGarbage(closestGarbage);
+                    pickUpGarbage();
                 } else {
                     decideMove(closestGarbage, positionX, positionY);
                 }
@@ -147,19 +147,42 @@ class MyClient implements Runnable {
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
 
-                Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
+
+                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
+
+
                 /// if we are on the object pick it up
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
-                    pickUpGarbage(closestGarbage);
-                } else {
-                    decideMove(closestGarbage, positionX, positionY);
+                    pickUpGarbage();
+                } else if (containers != null) {
+                    for (Container container : containers) {
+                        if (container.getVolume() > 10) {
+                            Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, container.getType(), recyclingPoints);
+                            if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
+                                dropGarbage();
+                            }
+                            if (closestRecyclingPoint.step < closestGarbage.step) {
+                                decideMove(closestRecyclingPoint, positionX, positionY);
+                            }
+                        }
+                    }
                 }
+                decideMove(closestGarbage, positionX, positionY);
             }
             message = new StringBuilder();
         }
     }
 
-    private void decideMove(Pair<BoardObjectType, BoardObject> closestGarbage, int positionX, int positionY) throws IOException {
+    private void dropGarbage() throws IOException {
+        Act drop = new Act();
+        drop.action = "drop";
+        drop.bot_id = this.botId;
+
+        //drop garbage
+        sendMessage(gson.toJson(drop));
+    }
+
+    private void decideMove(Pair<BoardObjectType, BoardObject, Integer> closestGarbage, int positionX, int positionY) throws IOException {
 
         Move move = new Move();
         if (closestGarbage.second.col < positionY) {
@@ -176,11 +199,12 @@ class MyClient implements Runnable {
         sendMessage(gson.toJson(move));
     }
 
-    public Pair<BoardObjectType, BoardObject> getNextCellToClosestGarbage(int col, int row, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
+    public Pair<BoardObjectType, BoardObject, Integer> getNextCellToClosestGarbage(int col, int row, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
         int MIN = 100;
         int[] start = {row, col};
         BoardObject nextStep = null;
         BoardObjectType closestGarbageType = null;
+        Integer steps = 0;
         if (boardObjectType != null) {
             for (BoardObject boardObject : currentObjects.get(boardObjectType)) {
                 int[] end = {boardObject.row, boardObject.col};
@@ -188,10 +212,12 @@ class MyClient implements Runnable {
                 if (path.size() < MIN && path.size() > 1) {
                     closestGarbageType = boardObjectType;
                     nextStep = new BoardObject(path.get(1).x, path.get(1).y);
+                    steps = path.size() - 1;
                     MIN = path.size();
                 } else if (path.size() == 1) {
                     closestGarbageType = boardObjectType;
                     nextStep = new BoardObject(path.get(0).x, path.get(0).y);
+                    steps = 0;
                     MIN = 1;
                 }
             }
@@ -204,21 +230,23 @@ class MyClient implements Runnable {
                         if (path.size() < MIN && path.size() > 1) {
                             closestGarbageType = boardObjectType1;
                             nextStep = new BoardObject(path.get(1).x, path.get(1).y);
+                            steps = path.size() - 1;
                             MIN = path.size();
                         } else if (path.size() == 1) {
                             closestGarbageType = boardObjectType1;
                             nextStep = new BoardObject(path.get(0).x, path.get(0).y);
+                            steps = 0;
                             MIN = 1;
                         }
                     }
                 }
             }
         }
-        return new Pair<>(closestGarbageType, nextStep);
+        return new Pair<>(closestGarbageType, nextStep, steps);
     }
 
 
-    private void pickUpGarbage(Pair<BoardObjectType, BoardObject> object) throws IOException {
+    private void pickUpGarbage() throws IOException {
         Act pickUp = new Act();
         pickUp.action = "pick";
         pickUp.bot_id = this.botId;
