@@ -223,7 +223,7 @@ class MyClient implements Runnable {
             }
         } else {
             for (BoardObjectType boardObjectType1 : BoardObjectType.values()) {
-                if (boardObjectType1.isGarbage()) {
+                if (boardObjectType1.isGarbage() && currentObjects.containsKey(boardObjectType1)) {
                     for (BoardObject boardObject : currentObjects.get(boardObjectType1)) {
                         int[] end = {boardObject.row, boardObject.col};
                         List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
