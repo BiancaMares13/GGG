@@ -135,6 +135,14 @@ class MyClient implements Runnable {
 
                 this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
+                int positionX = root.get("row").getAsInt();
+                int positionY = root.get("col").getAsInt();
+                Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, objects);
+                if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
+                    pickUpGarbage(closestGarbage);
+                } else {
+                    decideMove(closestGarbage, positionX, positionY);
+                }
             } else {
                 Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
@@ -145,10 +153,8 @@ class MyClient implements Runnable {
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
 
-                /// if we are on the object pick it up
-                System.out.println("PositionX     " + positionX);
-                System.out.println("Positiony    " + positionY);
                 Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
+                /// if we are on the object pick it up
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
                     pickUpGarbage(closestGarbage);
                 } else {
@@ -226,18 +232,6 @@ class MyClient implements Runnable {
 
         //pick up garbage
         sendMessage(gson.toJson(pickUp));
-
-        for (Container container : containers) {
-            if (container.getGarbageType() == null) {
-                container.setGarbageType(object.first);
-                container.setRemainingSpace(container.getRemainingSpace() - object.second.volume);
-                break;
-            } else {
-                if (container.getGarbageType().equals(object.first)) {
-                    container.setRemainingSpace(container.getRemainingSpace() - object.second.volume);
-                }
-            }
-        }
     }
 
 
