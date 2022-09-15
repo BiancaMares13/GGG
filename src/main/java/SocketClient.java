@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import model.Move;
 import model.MoveType;
@@ -9,6 +10,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class SocketClient {
 
@@ -29,6 +32,8 @@ class MyClient implements Runnable {
     private final BufferedReader buffReader;
     private final OutputStream writer;
     public String botId;
+
+    private Character[][] board;
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -83,7 +88,7 @@ class MyClient implements Runnable {
             System.out.println("Message received: " + message);
 
             //TODO: do smth with message
-
+            System.out.println();
             Gson gson = new Gson();
             String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
             JsonObject root = gson.fromJson(replacedMessage, JsonObject.class);
@@ -92,6 +97,22 @@ class MyClient implements Runnable {
                 botId = root.get("bot_id").getAsString();
             } else{
                 sendMessage(gson.toJson(decideMove()));
+            }
+            if(root.get("gameBoard") != null) {
+                JsonArray boardFromServer = root.get("gameBoard").getAsJsonArray();
+                List<List<Character>> board = new ArrayList<>();
+                boardFromServer.forEach(jsonElement -> {
+                    JsonArray boardElement = jsonElement.getAsJsonArray();
+                    List<Character> characters = new ArrayList<>();
+                    boardElement.forEach(be ->
+                            characters.add(be.getAsJsonPrimitive().getAsCharacter()));
+
+                    board.add(characters);
+                });
+                this.board = board.stream()
+                        .map(l -> l.toArray(new Character[0]))
+                        .toArray(Character[][]::new);
+                System.out.println(board);
             }
 
 
