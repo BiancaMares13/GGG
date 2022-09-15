@@ -154,31 +154,31 @@ class MyClient implements Runnable {
 
                 Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, currentObjets);
 
+                if (containers != null) {
+                    for (Container container : containers) {
+                        if (container.getVolume() > 10) {
+                            Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, Collections.singletonList(container.getType()), recyclingPoints);
+                            if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
+                                dropGarbage();
+                            }
+                            if (closestRecyclingPoint.step < closestGarbage.step) {
+                                decideMove(closestRecyclingPoint, positionX, positionY);
+                            }
+                        }
+                    }
+                    if (containers.size() == 3) {
+                        closestGarbage = getNextCellToClosestGarbage(positionX, positionY, containers.stream().map(Container::getType).collect(Collectors.toList()), currentObjets);
+                        decideMove(closestGarbage, positionX, positionY);
+                    }
+                }
                 /// if we are on the object pick it up
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
                     pickUpGarbage();
                 } else {
-                    if (containers != null) {
-                        for (Container container : containers) {
-                            if (container.getVolume() > 10) {
-                                Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, Collections.singletonList(container.getType()), recyclingPoints);
-                                if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
-                                    dropGarbage();
-                                }
-                                if (closestRecyclingPoint.step < closestGarbage.step) {
-                                    decideMove(closestRecyclingPoint, positionX, positionY);
-                                }
-                            }
-                        }
-                        if (containers.size() == 3) {
-                            Pair<BoardObjectType, BoardObject, Integer> closestGarbageForTypes = getNextCellToClosestGarbage(positionX, positionY, containers.stream().map(Container::getType).collect(Collectors.toList()), recyclingPoints);
-                            decideMove(closestGarbageForTypes, positionX, positionY);
-                        }
-                    } else {
-                        decideMove(closestGarbage, positionX, positionY);
-                    }
-                }
 
+                    closestGarbage = getNextCellToClosestGarbage(positionX, positionY, null, currentObjets);
+                    decideMove(closestGarbage, positionX, positionY);
+                }
             }
 
             long endTime = System.nanoTime();
@@ -222,19 +222,21 @@ class MyClient implements Runnable {
         Integer steps = 0;
         if (boardObjectTypes != null) {
             for (BoardObjectType currentBoardType : boardObjectTypes) {
-                for (BoardObject boardObject : currentObjects.get(currentBoardType)) {
-                    int[] end = {boardObject.row, boardObject.col};
-                    List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
-                    if (path.size() < MIN && path.size() > 1) {
-                        closestGarbageType = currentBoardType;
-                        nextStep = new BoardObject(path.get(1).x, path.get(1).y);
-                        steps = path.size() - 1;
-                        MIN = path.size();
-                    } else if (path.size() == 1) {
-                        closestGarbageType = currentBoardType;
-                        nextStep = new BoardObject(path.get(0).x, path.get(0).y);
-                        steps = 0;
-                        MIN = 1;
+                if (currentObjects.containsKey(currentBoardType)) {
+                    for (BoardObject boardObject : currentObjects.get(currentBoardType)) {
+                        int[] end = {boardObject.row, boardObject.col};
+                        List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
+                        if (path.size() < MIN && path.size() > 1) {
+                            closestGarbageType = currentBoardType;
+                            nextStep = new BoardObject(path.get(1).x, path.get(1).y);
+                            steps = path.size() - 1;
+                            MIN = path.size();
+                        } else if (path.size() == 1) {
+                            closestGarbageType = currentBoardType;
+                            nextStep = new BoardObject(path.get(0).x, path.get(0).y);
+                            steps = 0;
+                            MIN = 1;
+                        }
                     }
                 }
             }
