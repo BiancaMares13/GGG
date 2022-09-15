@@ -2,10 +2,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import model.BoardObject;
-import model.Container;
-import model.Move;
-import model.MoveType;
+import model.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,7 +40,7 @@ class MyClient implements Runnable {
     private Integer containerMaxCapacity;
     private List<Container> containers = List.of(new Container(), new Container(), new Container());
 
-    private Map<String, List<BoardObject>> objects = new HashMap<>();
+    private Map<BoardObjectType, List<BoardObject>> objects = new HashMap<>();
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -123,7 +120,7 @@ class MyClient implements Runnable {
                         .map(l -> l.toArray(new Character[0]))
                         .toArray(Character[][]::new);
 
-                this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<String, List<BoardObject>>>() {
+                this.objects = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
 
                 System.out.println(board);
