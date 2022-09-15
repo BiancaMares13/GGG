@@ -14,4 +14,9 @@ public class BoardObject {
         this.row = i.get();
         this.col = j.get();
     }
+
+    public BoardObject(int row, int col) {
+        this.row = row;
+        this.col = col;
+    }
 }

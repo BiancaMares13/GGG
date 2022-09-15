@@ -34,6 +34,7 @@ class MyClient implements Runnable {
     private boolean connected = true;
     private final BufferedReader buffReader;
     private final OutputStream writer;
+    private Gson gson = new Gson();
     private String botId;
 
 
@@ -99,7 +100,6 @@ class MyClient implements Runnable {
 
             //TODO: do smth with message
             System.out.println();
-            Gson gson = new Gson();
             String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
             JsonObject root = gson.fromJson(replacedMessage, JsonObject.class);
             System.out.println(root);
@@ -119,7 +119,7 @@ class MyClient implements Runnable {
                     AtomicInteger j = new AtomicInteger();
                     boardElement.forEach(be -> {
                         char asCharacter = be.getAsJsonPrimitive().getAsCharacter();
-                        if (asCharacter == 'P' || asCharacter == 'W' || asCharacter == 'M' || asCharacter == 'G' || asCharacter == 'E' ) {
+                        if (asCharacter == 'P' || asCharacter == 'W' || asCharacter == 'M' || asCharacter == 'G' || asCharacter == 'E') {
                             BoardObjectType boardObjectType = BoardObjectType.valueOf(Character.toString(asCharacter));
                             recyclingPoints.computeIfAbsent(boardObjectType, k -> new ArrayList<>());
                             List<BoardObject> boarGameObj = recyclingPoints.get(boardObjectType);
@@ -146,20 +146,60 @@ class MyClient implements Runnable {
 
                 System.out.println(board);
             } else {
-                sendMessage(gson.toJson(decideMove()));
+                sendMessage(gson.toJson(decideMove(root)));
             }
 
             message = new StringBuilder();
         }
     }
 
-    private Move decideMove() {
+    private Move decideMove(JsonObject root) {
+        Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
+        }.getType());
+        Pair<BoardObjectType, BoardObject> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, currentObjets);
         Move move = new Move();
+        if (closestGarbage.second.col < root.get("col").getAsInt()) {
+            move.move = "left";
+        } else if (closestGarbage.second.col > root.get("col").getAsInt()) {
+            move.move = "right";
+        } else if ( closestGarbage.second.row < root.get("row").getAsInt()) {
+            move.move = "up";
+        } else {
+            move.move = "down";
+        }
         move.bot_id = botId;
-        move.move = MoveType.randomMove().name();
         move.speed = 1;
         return move;
     }
+
+    public Pair<BoardObjectType, BoardObject> getNextCellToClosestGarbage(int col, int row, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
+        int MIN = 100;
+        int [] start = {row, col};
+        BoardObject nextStep = null;
+        BoardObjectType closestGarbageType = null;
+        if (boardObjectType != null) {
+            for (BoardObject boardObject : currentObjects.get(boardObjectType)) {
+                int [] end = {boardObject.row, boardObject.col};
+                List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
+                if (path.size() < MIN) {
+                    closestGarbageType = boardObjectType;
+                    nextStep = new BoardObject(path.get(1).x, path.get(1).y);
+                    MIN = path.size();
+                }
+            }
+            return new Pair<>(closestGarbageType, nextStep);
+        } else {
+//            for (BoardObjectType boardObjectType1 : BoardObjectType.values()) {
+//                for (BoardObject boardObject : currentObjects.get(boardObjectType1)) {
+//                    int [] end = {boardObject.row, boardObject.col};
+//                    List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
+//                }
+//            }
+            return null;
+        }
+        //return new Pair<>(closestGarbageType, closestGarbage);
+    }
+
 
     public void close() throws IOException {
         System.out.println("closing connection");
