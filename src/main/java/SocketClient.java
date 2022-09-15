@@ -2,7 +2,6 @@ import com.google.gson.Gson;
 import model.Root;
 
 import java.io.BufferedReader;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -10,8 +9,9 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public final class SocketClient {
+
     public static void main(String[] args) {
-        String address = "localhost";
+        String address = "127.0.0.1";
         int port = 31415;
         String teamName = "Runtime Terror";
         MyClient client = new MyClient(address, port);
@@ -26,6 +26,7 @@ class MyClient implements Runnable {
     private boolean connected = true;
     private final BufferedReader buffReader;
     private final OutputStream writer;
+    public String botId;
 
     public MyClient(String address, int port) {
         this.connection = initConnection(address, port);
@@ -48,13 +49,13 @@ class MyClient implements Runnable {
         registerMsg = "{ \"get_team_id_for\" :\"" + teamName + "\"}";
 
         try {
-            this.sendMessage(registerMsg);
+            botId = new String(this.sendMessage(registerMsg), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void sendMessage(String message) throws IOException {
+    public byte[] sendMessage(String message) throws IOException {
         System.out.println("sendingMessage: " + message);
         int msgLen = message.length();
         String hex = String.format("%04X", msgLen);
@@ -62,6 +63,7 @@ class MyClient implements Runnable {
 
         byte[] byteArray = fullMsg.getBytes(StandardCharsets.UTF_8);
         writer.write(byteArray);
+        return byteArray;
     }
 
     private void read() throws IOException {
