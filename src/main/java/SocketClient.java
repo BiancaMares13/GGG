@@ -83,6 +83,8 @@ class MyClient implements Runnable {
         StringBuilder message = new StringBuilder();
         char c;
         while (true) {
+            long startTime = System.nanoTime();
+
             do {
                 int r = this.buffReader.read();
                 if (r < 0 || r > 65535) {
@@ -92,7 +94,8 @@ class MyClient implements Runnable {
                 //println("char: " + c)
                 message.append(c);
             } while (c != (char) 0);
-            System.out.println("Message received: " + message);
+
+            //TODO: do smth with message
             String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
             JsonObject root = gson.fromJson(replacedMessage, JsonObject.class);
 
@@ -133,7 +136,7 @@ class MyClient implements Runnable {
                 }.getType());
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
-                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), BoardObjectType.G, objects);
+                Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, objects);
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
                     pickUpGarbage();
                 } else {
@@ -170,6 +173,10 @@ class MyClient implements Runnable {
                 }
 
             }
+
+            long endTime = System.nanoTime();
+            long executionTime = endTime - startTime;
+            System.out.println("Execution time  " + executionTime);
             message = new StringBuilder();
         }
     }
@@ -251,7 +258,6 @@ class MyClient implements Runnable {
         Act pickUp = new Act();
         pickUp.action = "pick";
         pickUp.bot_id = this.botId;
-
         //pick up garbage
         sendMessage(gson.toJson(pickUp));
     }

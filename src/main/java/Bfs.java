@@ -24,7 +24,7 @@ public class Bfs {
         int sx = start[0], sy = start[1];
         int dx = end[0], dy = end[1];
         //if start or end value is 0, return
-        if (matrix[sx][sy] == 'o' || matrix[dx][dy] == 'o') {
+        if (matrix[sx][sy] == 'o' || matrix[dx][dy] == 'o' || matrix[dx][dy] == '#' || matrix[sx][sy] == '#') {
             System.out.println("There is no path.");
             return new LinkedList<>();
         }
@@ -34,7 +34,7 @@ public class Bfs {
         Cell[][] cells = new Cell[m][n];
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
-                if (matrix[i][j] != 'o') {
+                if (matrix[i][j] != 'o' && matrix[i][j] != '#') {
                     cells[i][j] = new Cell(i, j, Integer.MAX_VALUE, null);
                 }
             }
