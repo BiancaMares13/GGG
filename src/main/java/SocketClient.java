@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public final class SocketClient {
 
@@ -145,7 +146,8 @@ class MyClient implements Runnable {
             } else {
                 Map<BoardObjectType, List<BoardObject>> currentObjets = gson.fromJson(root.get("objects"), new TypeToken<Map<BoardObjectType, List<BoardObject>>>() {
                 }.getType());
-                List<Container> containers = gson.fromJson(root.get("containers"), new TypeToken<List<Container>>() {}.getType());
+                List<Container> containers = gson.fromJson(root.get("containers"), new TypeToken<List<Container>>() {
+                }.getType());
 
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
@@ -159,7 +161,7 @@ class MyClient implements Runnable {
                     if (containers != null) {
                         for (Container container : containers) {
                             if (container.getVolume() > 10) {
-                                Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, container.getType(), recyclingPoints);
+                                Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, Collections.singletonList(container.getType()), recyclingPoints);
                                 if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
                                     dropGarbage();
                                 }
@@ -168,8 +170,13 @@ class MyClient implements Runnable {
                                 }
                             }
                         }
+                        if (containers.size() == 3) {
+                            Pair<BoardObjectType, BoardObject, Integer> closestGarbageForTypes = getNextCellToClosestGarbage(positionX, positionY, containers.stream().map(Container::getType).collect(Collectors.toList()), recyclingPoints);
+                            decideMove(closestGarbageForTypes, positionX, positionY);
+                        }
+                    } else {
+                        decideMove(closestGarbage, positionX, positionY);
                     }
-                    decideMove(closestGarbage, positionX, positionY);
                 }
 
             }
@@ -207,26 +214,28 @@ class MyClient implements Runnable {
         sendMessage(gson.toJson(move));
     }
 
-    public Pair<BoardObjectType, BoardObject, Integer> getNextCellToClosestGarbage(int row, int col, BoardObjectType boardObjectType, Map<BoardObjectType, List<BoardObject>> currentObjects) {
+    public Pair<BoardObjectType, BoardObject, Integer> getNextCellToClosestGarbage(int row, int col, List<BoardObjectType> boardObjectTypes, Map<BoardObjectType, List<BoardObject>> currentObjects) {
         int MIN = 100;
         int[] start = {row, col};
         BoardObject nextStep = null;
         BoardObjectType closestGarbageType = null;
         Integer steps = 0;
-        if (boardObjectType != null) {
-            for (BoardObject boardObject : currentObjects.get(boardObjectType)) {
-                int[] end = {boardObject.row, boardObject.col};
-                List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
-                if (path.size() < MIN && path.size() > 1) {
-                    closestGarbageType = boardObjectType;
-                    nextStep = new BoardObject(path.get(1).x, path.get(1).y);
-                    steps = path.size() - 1;
-                    MIN = path.size();
-                } else if (path.size() == 1) {
-                    closestGarbageType = boardObjectType;
-                    nextStep = new BoardObject(path.get(0).x, path.get(0).y);
-                    steps = 0;
-                    MIN = 1;
+        if (boardObjectTypes != null) {
+            for (BoardObjectType currentBoardType : boardObjectTypes) {
+                for (BoardObject boardObject : currentObjects.get(currentBoardType)) {
+                    int[] end = {boardObject.row, boardObject.col};
+                    List<Bfs.Cell> path = Bfs.shortestPath(this.board, start, end);
+                    if (path.size() < MIN && path.size() > 1) {
+                        closestGarbageType = currentBoardType;
+                        nextStep = new BoardObject(path.get(1).x, path.get(1).y);
+                        steps = path.size() - 1;
+                        MIN = path.size();
+                    } else if (path.size() == 1) {
+                        closestGarbageType = currentBoardType;
+                        nextStep = new BoardObject(path.get(0).x, path.get(0).y);
+                        steps = 0;
+                        MIN = 1;
+                    }
                 }
             }
         } else {
