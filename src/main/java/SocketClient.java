@@ -147,27 +147,28 @@ class MyClient implements Runnable {
                 int positionX = root.get("row").getAsInt();
                 int positionY = root.get("col").getAsInt();
 
-
                 Pair<BoardObjectType, BoardObject, Integer> closestGarbage = getNextCellToClosestGarbage(root.get("col").getAsInt(), root.get("row").getAsInt(), null, currentObjets);
-
 
                 /// if we are on the object pick it up
                 if (positionX == closestGarbage.second.row && positionY == closestGarbage.second.col) {
                     pickUpGarbage();
-                } else if (containers != null) {
-                    for (Container container : containers) {
-                        if (container.getVolume() > 10) {
-                            Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, container.getType(), recyclingPoints);
-                            if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
-                                dropGarbage();
-                            }
-                            if (closestRecyclingPoint.step < closestGarbage.step) {
-                                decideMove(closestRecyclingPoint, positionX, positionY);
+                } else {
+                    if (containers != null) {
+                        for (Container container : containers) {
+                            if (container.getVolume() > 10) {
+                                Pair<BoardObjectType, BoardObject, Integer> closestRecyclingPoint = getNextCellToClosestGarbage(positionX, positionY, container.getType(), recyclingPoints);
+                                if (positionX == closestRecyclingPoint.second.row && positionY == closestRecyclingPoint.second.col) {
+                                    dropGarbage();
+                                }
+                                if (closestRecyclingPoint.step < closestGarbage.step) {
+                                    decideMove(closestRecyclingPoint, positionX, positionY);
+                                }
                             }
                         }
                     }
+                    decideMove(closestGarbage, positionX, positionY);
                 }
-                decideMove(closestGarbage, positionX, positionY);
+
             }
             message = new StringBuilder();
         }
