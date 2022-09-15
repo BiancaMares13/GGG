@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import model.Root;
 
 import java.io.BufferedReader;
 import java.io.Console;
@@ -81,6 +82,9 @@ class MyClient implements Runnable {
             //TODO: do smth with message
 
             Gson gson = new Gson();
+            String replacedMessage = message.substring(4, message.length()).replaceAll("\\r\\n", "").replace("\0", "");
+            Object root = gson.fromJson(replacedMessage, Object.class);
+            System.out.println(root);
 
             message = new StringBuilder();
         }
