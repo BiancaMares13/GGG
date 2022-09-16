@@ -19,7 +19,7 @@ public final class SocketClient {
     public static void main(String[] args) {
         String address = "127.0.0.1";
         int port = 31415;
-        String teamName = "Runtime Terror" + new Random().nextInt(1234);
+        String teamName = "Runtime Terror";
         MyClient client = new MyClient(address, port);
         new Thread(client).start();
         client.register(teamName);
